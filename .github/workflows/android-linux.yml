@@ -90,6 +90,17 @@ jobs:
             -validity 10000 \
             -dname "CN=QGroundControl Temporary CI, OU=CI, O=QGroundControl, L=Unknown, ST=Unknown, C=US"
 
+      - name: Pin PX4 GPS drivers for QGC 5.0.8
+        env:
+          PX4_GPSDRIVERS_COMMIT: 0b9695881bd1e8f830ab4538ab3acc0050019eba
+        run: |
+          gpsdrivers_dir="${RUNNER_TEMP}/px4-gpsdrivers"
+          git init "${gpsdrivers_dir}"
+          git -C "${gpsdrivers_dir}" remote add origin https://github.com/PX4/PX4-GPSDrivers.git
+          git -C "${gpsdrivers_dir}" fetch --depth 1 origin "${PX4_GPSDRIVERS_COMMIT}"
+          git -C "${gpsdrivers_dir}" checkout --detach FETCH_HEAD
+          echo "PX4_GPSDRIVERS_SOURCE=${gpsdrivers_dir}" >> "${GITHUB_ENV}"
+
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
@@ -99,6 +110,8 @@ jobs:
               -DQT_ANDROID_BUILD_ALL_ABIS=OFF
               -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../gcc_64"
               -DQT_ANDROID_SIGN_APK=ON
+              -DCPM_px4-gpsdrivers_SOURCE="${PX4_GPSDRIVERS_SOURCE}"
+              -DQT_ANDROID_MULTI_ABI_FORWARD_VARS="CPM_px4-gpsdrivers_SOURCE"
               -DQT_DEBUG_FIND_PACKAGE=ON
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
