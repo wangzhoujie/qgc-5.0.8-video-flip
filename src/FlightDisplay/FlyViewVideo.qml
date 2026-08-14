@@ -20,6 +20,9 @@ Item {
     property Item pipView
     property Item pipState: videoPipState
 
+    property bool horizontalFlip: false
+    property bool verticalFlip:   false
+
     property int    _track_rec_x:       0
     property int    _track_rec_y:       0
 
@@ -59,6 +62,13 @@ Item {
         anchors.fill:   parent
         useSmallFont:   _root.pipState.state !== _root.pipState.fullState
         visible:        QGroundControl.videoManager.isStreamSource
+
+        transform: Scale {
+            origin.x:   videoStreaming.width / 2
+            origin.y:   videoStreaming.height / 2
+            xScale:     _root.horizontalFlip ? -1 : 1
+            yScale:     _root.verticalFlip ? -1 : 1
+        }
     }
     //-- UVC Video (USB Camera or Video Device)
     Loader {
@@ -66,6 +76,13 @@ Item {
         anchors.fill:   parent
         visible:        QGroundControl.videoManager.isUvc
         source:         QGroundControl.videoManager.uvcEnabled ? "qrc:/qml/QGroundControl/FlightDisplay/FlightDisplayViewUVC.qml" : "qrc:/qml/QGroundControl/FlightDisplay//FlightDisplayViewDummy.qml"
+
+        transform: Scale {
+            origin.x:   cameraLoader.width / 2
+            origin.y:   cameraLoader.height / 2
+            xScale:     _root.horizontalFlip ? -1 : 1
+            yScale:     _root.verticalFlip ? -1 : 1
+        }
     }
 
     QGCLabel {
@@ -94,6 +111,8 @@ Item {
         anchors.fill:            parent
         screenX:                 flyViewVideoMouseArea.mouseX
         screenY:                 flyViewVideoMouseArea.mouseY
+        horizontalFlip:          _root.horizontalFlip
+        verticalFlip:            _root.verticalFlip
         cameraTrackingEnabled:   videoStreaming._camera && videoStreaming._camera.trackingEnabled
     }
 
@@ -181,6 +200,20 @@ Item {
                     y0 = Math.max(Math.min(y0 / videoStreaming.getHeight(), 1.0), 0.0)
                     y1 = Math.max(Math.min(y1 / videoStreaming.getHeight(), 1.0), 0.0)
 
+                    // Convert displayed coordinates back to the unmodified video coordinates.
+                    if (_root.horizontalFlip) {
+                        var flippedX0 = 1.0 - x1
+                        var flippedX1 = 1.0 - x0
+                        x0 = flippedX0
+                        x1 = flippedX1
+                    }
+                    if (_root.verticalFlip) {
+                        var flippedY0 = 1.0 - y1
+                        var flippedY1 = 1.0 - y0
+                        y0 = flippedY0
+                        y1 = flippedY1
+                    }
+
                     //use point message if rectangle is very small
                     if (Math.abs(_track_rec_x - mouse.x) < 10 && Math.abs(_track_rec_y - mouse.y) < 10) {
                         var pt  = Qt.point(x0, y0)
@@ -226,10 +259,20 @@ Item {
                     if (videoStreaming._camera.trackingEnabled && videoStreaming._camera.trackingImageStatus) {
                         var margin_hor = (parent.parent.width - videoStreaming.getWidth()) / 2
                         var margin_ver = (parent.parent.height - videoStreaming.getHeight()) / 2
-                        var left = margin_hor + videoStreaming.getWidth() * videoStreaming._camera.trackingImageRect.left
-                        var top = margin_ver + videoStreaming.getHeight() * videoStreaming._camera.trackingImageRect.top
-                        var right = margin_hor + videoStreaming.getWidth() * videoStreaming._camera.trackingImageRect.right
-                        var bottom = margin_ver + !isNaN(videoStreaming._camera.trackingImageRect.bottom) ? videoStreaming.getHeight() * videoStreaming._camera.trackingImageRect.bottom : top + (right - left)
+                        var trackingRect = videoStreaming._camera.trackingImageRect
+                        var sourceBottom = !isNaN(trackingRect.bottom)
+                            ? trackingRect.bottom
+                            : trackingRect.top + (videoStreaming.getWidth() / videoStreaming.getHeight()) * (trackingRect.right - trackingRect.left)
+                        var displayLeft = _root.horizontalFlip ? 1.0 - trackingRect.right : trackingRect.left
+                        var displayRight = _root.horizontalFlip ? 1.0 - trackingRect.left : trackingRect.right
+                        var displayTop = _root.verticalFlip ? 1.0 - sourceBottom : trackingRect.top
+                        var displayBottom = _root.verticalFlip ? 1.0 - trackingRect.top : sourceBottom
+                        var left = margin_hor + videoStreaming.getWidth() * displayLeft
+                        var top = margin_ver + videoStreaming.getHeight() * displayTop
+                        var right = margin_hor + videoStreaming.getWidth() * displayRight
+                        var bottom = !isNaN(displayBottom)
+                            ? margin_ver + videoStreaming.getHeight() * displayBottom
+                            : top + (right - left)
                         var width = right - left
                         var height = bottom - top
 
@@ -245,6 +288,29 @@ Item {
                     }
                 }
             }
+        }
+    }
+
+    Row {
+        anchors.top:        parent.top
+        anchors.right:      parent.right
+        anchors.margins:    ScreenTools.defaultFontPixelWidth
+        spacing:            ScreenTools.defaultFontPixelWidth
+        visible:            videoStreaming.visible || cameraLoader.visible
+        z:                  100
+
+        QGCButton {
+            text:           qsTr("左右翻转")
+            checkable:      true
+            checked:        _root.horizontalFlip
+            onClicked:      _root.horizontalFlip = checked
+        }
+
+        QGCButton {
+            text:           qsTr("上下翻转")
+            checkable:      true
+            checked:        _root.verticalFlip
+            onClicked:      _root.verticalFlip = checked
         }
     }
 

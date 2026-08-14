@@ -24,6 +24,9 @@ Item {
     property var screenXrateInitCoocked
     property var screenYrateInitCoocked
 
+    property bool horizontalFlip: false
+    property bool verticalFlip:   false
+
     property var  activeVehicle:                QGroundControl.multiVehicleManager.activeVehicle
     property var  gimbalController:             activeVehicle ? activeVehicle.gimbalController : undefined
     property var  activeGimbal:                 gimbalController ? gimbalController.activeGimbal : undefined
@@ -31,6 +34,16 @@ Item {
     property var  gimbalControllerSettings:     QGroundControl.settingsManager.gimbalControllerSettings
     property bool cameraTrackingEnabled:        false // Used to ignore clicks when camera tracking operation is active, otherwise it would collide with these gimbal controls
     property bool shouldProcessClicks:          gimbalControllerSettings.EnableOnScreenControl.value && activeGimbal && !cameraTrackingEnabled ? true : false
+
+    function normalizedX(xPosition) {
+        var normalized = ((xPosition / parent.width) * 2) - 1
+        return horizontalFlip ? -normalized : normalized
+    }
+
+    function normalizedY(yPosition) {
+        var normalized = -((yPosition / parent.height) * 2) + 1
+        return verticalFlip ? -normalized : normalized
+    }
 
     function clickControl() {
         if (!shouldProcessClicks) {
@@ -40,14 +53,14 @@ Item {
         if (!gimbalControllerSettings.ControlType.rawValue == 0) {
             return
         }
-        clickAndPoint(x, y)
+        clickAndPoint()
     }
 
     // Sends a +-(0-1) xy value to vehicle.gimbalController.gimbalOnScreenControl
     function clickAndPoint() {
         if (rootItem.gimbalAvailable) {
-            var xCoocked =  ( (screenX / parent.width)  * 2) - 1
-            var yCoocked = -( (screenY / parent.height) * 2) + 1
+            var xCoocked = normalizedX(screenX)
+            var yCoocked = normalizedY(screenY)
             // console.log("X global: " + x + " Y global: " + y)
             // console.log("X coocked: " + xCoocked + " Y coocked: " + yCoocked)
             gimbalController.gimbalOnScreenControl(xCoocked, yCoocked, true, false, false)
@@ -66,8 +79,8 @@ Item {
             return
         }
         sendRateTimer.start()
-        screenXrateInitCoocked =  ( ( screenX / parent.width)  * 2) - 1
-        screenYrateInitCoocked = -( ( screenY / parent.height) * 2) + 1
+        screenXrateInitCoocked = normalizedX(screenX)
+        screenYrateInitCoocked = normalizedY(screenY)
     }
 
     function releaseControl() {
@@ -89,8 +102,8 @@ Item {
         repeat:         true
         onTriggered: {
             if (rootItem.gimbalAvailable) {
-                var xCoocked =  ( ( screenX / parent.width)  * 2) - 1
-                var yCoocked = -( ( screenY / parent.height) * 2) + 1
+                var xCoocked = normalizedX(screenX)
+                var yCoocked = normalizedY(screenY)
                 xCoocked -= screenXrateInitCoocked
                 yCoocked -= screenYrateInitCoocked
                 gimbalController.gimbalOnScreenControl(xCoocked, yCoocked, false, true, true)

@@ -41,8 +41,8 @@ jobs:
       QT_VERSION: 6.8.3
       QT_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/deploy/android/android_release.keystore
       QT_ANDROID_KEYSTORE_ALIAS: QGCAndroidKeyStore
-      QT_ANDROID_KEYSTORE_STORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      QT_ANDROID_KEYSTORE_KEY_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      QT_ANDROID_KEYSTORE_STORE_PASS: QGCTemporaryCiKey123
+      QT_ANDROID_KEYSTORE_KEY_PASS: QGCTemporaryCiKey123
       QT_ANDROID_ABIS: ${{ matrix.BuildType == 'Release' && 'armeabi-v7a;arm64-v8a' || 'arm64-v8a' }}
 
     steps:
@@ -78,6 +78,18 @@ jobs:
           abis: ${{ env.QT_ANDROID_ABIS }}
           cpm-modules: ${{ runner.temp }}/shadow_build_dir/cpm_modules
 
+      - name: Generate temporary Android keystore
+        run: |
+          keytool -genkeypair -noprompt \
+            -keystore "${QT_ANDROID_KEYSTORE_PATH}" \
+            -storepass "${QT_ANDROID_KEYSTORE_STORE_PASS}" \
+            -keypass "${QT_ANDROID_KEYSTORE_KEY_PASS}" \
+            -alias "${QT_ANDROID_KEYSTORE_ALIAS}" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=QGroundControl Temporary CI, OU=CI, O=QGroundControl, L=Unknown, ST=Unknown, C=US"
+
       - name: Configure
         working-directory: ${{ runner.temp }}/shadow_build_dir
         run: ${{ env.QT_ROOT_DIR }}/bin/qt-cmake -S ${{ github.workspace }} -B . -G Ninja
@@ -86,7 +98,7 @@ jobs:
               -DQT_ANDROID_ABIS="${{ env.QT_ANDROID_ABIS }}"
               -DQT_ANDROID_BUILD_ALL_ABIS=OFF
               -DQT_HOST_PATH="${{ env.QT_ROOT_DIR }}/../gcc_64"
-              -DQT_ANDROID_SIGN_APK=${{ env.QT_ANDROID_KEYSTORE_STORE_PASS != '' && 'ON' || 'OFF' }}
+              -DQT_ANDROID_SIGN_APK=ON
               -DQT_DEBUG_FIND_PACKAGE=ON
               -DQGC_STABLE_BUILD=${{ github.ref_type == 'tag' || contains(github.ref, 'Stable') && 'ON' || 'OFF' }}
 
