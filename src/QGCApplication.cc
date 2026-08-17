@@ -211,8 +211,11 @@ QGCApplication::QGCApplication(int &argc, char *argv[], bool unitTesting, bool s
 
 void QGCApplication::setLanguage()
 {
-    _locale = QLocale::system();
-    qCDebug(QGCApplicationLog) << "System reported locale:" << _locale << "; Name" << _locale.name() << "; Preffered (used in maps): " << (QLocale::system().uiLanguages().length() > 0 ? QLocale::system().uiLanguages()[0] : "None");
+    const QLocale systemLocale = QLocale::system();
+    // This build defaults to Simplified Chinese while still allowing the
+    // explicit language setting below to override the default.
+    _locale = QLocale(QLocale::Chinese, QLocale::China);
+    qCDebug(QGCApplicationLog) << "System reported locale:" << systemLocale << "; Name" << systemLocale.name() << "; Preffered (used in maps): " << (systemLocale.uiLanguages().length() > 0 ? systemLocale.uiLanguages()[0] : "None");
 
     QLocale::Language possibleLocale = AppSettings::_qLocaleLanguageEarlyAccess();
     if (possibleLocale != QLocale::AnyLanguage) {
