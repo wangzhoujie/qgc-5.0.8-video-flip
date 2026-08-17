@@ -127,6 +127,20 @@
     "default":     false
 },
 {
+    "name":             "horizontalFlip",
+    "shortDesc":        "Flip video horizontally",
+    "longDesc":         "Mirrors the displayed video horizontally without changing the recorded video.",
+    "type":             "bool",
+    "default":          false
+},
+{
+    "name":             "verticalFlip",
+    "shortDesc":        "Flip video vertically",
+    "longDesc":         "Mirrors the displayed video vertically without changing the recorded video.",
+    "type":             "bool",
+    "default":          false
+},
+{
     "name":             "forceVideoDecoder",
     "shortDesc":        "Force specific category of video decode",
     "longDesc":         "Force the change of prioritization between video decode methods, allowing the user to force some video hardware decode plugins if necessary.",

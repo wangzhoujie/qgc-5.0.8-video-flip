@@ -20,8 +20,8 @@ Item {
     property Item pipView
     property Item pipState: videoPipState
 
-    property bool horizontalFlip: false
-    property bool verticalFlip:   false
+    readonly property bool horizontalFlip: QGroundControl.settingsManager.videoSettings.horizontalFlip.rawValue
+    readonly property bool verticalFlip:   QGroundControl.settingsManager.videoSettings.verticalFlip.rawValue
 
     property int    _track_rec_x:       0
     property int    _track_rec_y:       0
@@ -288,29 +288,6 @@ Item {
                     }
                 }
             }
-        }
-    }
-
-    Row {
-        anchors.top:        parent.top
-        anchors.right:      parent.right
-        anchors.margins:    ScreenTools.defaultFontPixelWidth
-        spacing:            ScreenTools.defaultFontPixelWidth
-        visible:            videoStreaming.visible || cameraLoader.visible
-        z:                  100
-
-        QGCButton {
-            text:           qsTr("左右翻转")
-            checkable:      true
-            checked:        _root.horizontalFlip
-            onClicked:      _root.horizontalFlip = checked
-        }
-
-        QGCButton {
-            text:           qsTr("上下翻转")
-            checkable:      true
-            checked:        _root.verticalFlip
-            onClicked:      _root.verticalFlip = checked
         }
     }
 

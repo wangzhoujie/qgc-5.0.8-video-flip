@@ -106,6 +106,20 @@ SettingsPage {
             visible:            !_videoAutoStreamConfig && _isStreamSource && fact.visible && _isGST
         }
 
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("\u5de6\u53f3\u7ffb\u8f6c")
+            fact:               _videoSettings.horizontalFlip
+            visible:            fact.visible
+        }
+
+        FactCheckBoxSlider {
+            Layout.fillWidth:   true
+            text:               qsTr("\u4e0a\u4e0b\u7ffb\u8f6c")
+            fact:               _videoSettings.verticalFlip
+            visible:            fact.visible
+        }
+
         LabelledFactComboBox {
             Layout.fillWidth:   true
             label:              qsTr("Video decode priority")
